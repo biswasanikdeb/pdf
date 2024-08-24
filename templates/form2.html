@@ -22,47 +22,36 @@
 
             try {
                 // Send the form data to the server
-                const response = await fetch('/submit-form', {
+                const pdfResponse = await fetch('/submit-form', {
                     method: 'POST',
                     body: formData
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to submit form data');
-                }
-
-                // Fetch the PDF after submitting the form
-
-                const pdfResponse = await fetch('/download-pdf');
 
                 if (!pdfResponse.ok) {
                     throw new Error('Failed to fetch PDF');
                 }
 
                 // Get the PDF blob from the response
-                const pdfBlob = await pdfResponse.blob();
+                const pdfBlob = await pdfResponse.blob(); // Await the promise to get the blob
                 const url = URL.createObjectURL(pdfBlob);
 
                 // Create an iframe and set its source to the Object URL
                 const iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
-                iframe.src = url;  // Correct assignment
+                iframe.src = url; 
                 document.body.appendChild(iframe);
 
-                // Print the PDF
+                // Print the PDF once it is loaded
                 iframe.onload = function () {
+                    console.log("Iframe loaded"); // Debugging statement
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
 
-                    // Clean up after printing
-                    document.body.removeChild(iframe);
-                    URL.revokeObjectURL(url);
                 };
 
             } catch (error) {
                 console.error('Error handling PDF:', error);
             }
-
         }
     </script>
 </body>
