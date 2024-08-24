@@ -1,37 +1,39 @@
-from os.path import abspath
-import os
-from werkzeug.utils import safe_join
-from flask import Flask, request, send_file, render_template, make_response, send_from_directory
-from data_to_pdf import _Create_PDF
+from flask import Flask, request, render_template, make_response
+from xhtml2pdf import pisa
+import io
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
     return render_template('form2.html')
 
+
 @app.route('/submit-form', methods=['POST'])
 def generate_pdf():
     name = request.form['name']
     email = request.form['email']
-    print(name)
-    print(email)
-    ss = _Create_PDF()
-    ss.ccc(name,email)
-    return {'status': 'success'}, 200
+    print(f"Received Name: {name}, Email: {email}")  # Debugging statement
+
+    rendered_html = render_template('pdf_template.html', name=name, email=email)
+
+    pdf = io.BytesIO()
+
+    pisa_status = pisa.CreatePDF(io.StringIO(rendered_html), dest=pdf)
+
+    if pisa_status.err:
+        print("Error in PDF creation")  # Debugging statement
+        return "Error creating PDF", 500
+
+    pdf.seek(0)  # Rewind the buffer
+    response = make_response(pdf.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=form_data.pdf'
+
+    return response
 
 
-@app.route('/download-pdf', methods=['GET'])
-def download_pdf():
-    file_path = safe_join('static', 'test.pdf')
-    abs_path = abspath(file_path)
-    if not os.path.isfile(abs_path):
-        return "File not found", 404
-    with open(file_path, 'rb') as f:
-        file_data = f.read()
-        print("File size:", len(file_data))  # Print file size to ensure it's not zero
-
-    return send_file(abs_path, as_attachment=False, download_name='test.pdf',mimetype='application/pdf')
-
+#
 if __name__ == '__main__':
     app.run(debug=True)
