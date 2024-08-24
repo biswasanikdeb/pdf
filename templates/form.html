@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form to PDF</title>
+    <script src="/static/js/jsPDF-2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <form id="myForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+        <input type="button" value="Generate PDF" onclick="generateAndPrintPDF()">
+    </form>
+
+    <script>
+       async function generateAndPrintPDF() {
+            // Ensure jsPDF is fully loaded before using it
+            const { jsPDF } = window.jspdf;
+
+            if (!jsPDF) {
+                console.error('jsPDF is not available.');
+                return;
+            }
+
+            const pdf = new jsPDF();
+            const formData = new FormData(document.getElementById('myForm'));
+
+            let name = formData.get('name');
+            let email = formData.get('email');
+
+            pdf.text(`Name: ${name}`, 10, 10);
+            pdf.text(`Email: ${email}`, 10, 20);
+
+            // Generate the PDF as a Blob
+            const pdfBlob = pdf.output('blob');
+
+            // Create an Object URL for the Blob
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Create an iframe and set its source to the Object URL
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            document.body.appendChild(iframe);
+
+            // Print the PDF
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+
+            // Clean up
+            document.body.removeChild(iframe);
+        }
+        
+    </script>
+</body>
+</html>
